@@ -45,9 +45,21 @@ $dateOptions = [
             </div>
         </div>
 
+        <?php // Пустые строчные элементы в начинке блоков — норма: иконки шрифтов
+              // (`<span class="fa-…"></span>`) и декоративные span тем. Jodit по умолчанию
+              // их вычищает (`cleanHTML.removeEmptyElements`), поэтому здесь чистка выключена.
+              // Только для этого поля: в контенте страниц пустые теги — мусор, там она нужна.
+              // Остальные опции `cleanHTML` Jodit берёт из своих дефолтов (глубокое слияние). ?>
         <?= $form->field($model, 'content')->widget(EditorWidget::class, [
             'height' => 300,
             'enableSnippets' => true,
+            'engineConfig' => [
+                'jodit' => [
+                    'config' => [
+                        'cleanHTML' => ['removeEmptyElements' => false],
+                    ],
+                ],
+            ],
         ]) ?>
 
         <div class="row">
