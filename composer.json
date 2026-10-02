@@ -1,0 +1,57 @@
+{
+  "name": "besnovatyj/yii2-cms-blocks",
+  "description": "Модуль блоков Yii2 CMS: управляемое из админки содержимое мест, объявленных темой",
+  "type": "yii2-extension",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Besnovatyj",
+      "email": "your-email@example.com"
+    }
+  ],
+  "minimum-stability": "stable",
+  "extra": {
+    "moduleClass": "Besnovatyj\\Blocks\\Module",
+    "moduleId": "Blocks",
+    "bescms": { "kind": "module" },
+    "config-plugin": {
+      "admin-menu": "src/config/adminMenu.php",
+      "common": "src/config/common.php"
+    }
+  },
+  "keywords": [
+    "yii2",
+    "blocks",
+    "widget-areas",
+    "theme",
+    "cms"
+  ],
+  "config": {
+    "sort-packages": true,
+    "allow-plugins": {
+      "yiisoft/yii2-composer": true
+    },
+    "fxp-asset": {
+      "enabled": false
+    }
+  },
+  "require": {
+    "besnovatyj/yii2-cms-backend-widgets": "^1.0",
+    "besnovatyj/yii2-cms-contracts": "^1.2",
+    "besnovatyj/yii2-cms-datetime-widgets": "^1.0",
+    "besnovatyj/yii2-cms-editor": "^1.0",
+    "besnovatyj/yii2-cms-forms": "^1.0",
+    "besnovatyj/yii2-cms-kernel": "^1.2",
+    "php": ">=8.4",
+    "yiisoft/yii2": "~2.0.0",
+    "yiisoft/yii2-bootstrap5": "~2.0.0"
+  },
+  "require-dev": {
+    "roave/security-advisories": "dev-latest"
+  },
+  "autoload": {
+    "psr-4": {
+      "Besnovatyj\\Blocks\\": "src/"
+    }
+  }
+}
