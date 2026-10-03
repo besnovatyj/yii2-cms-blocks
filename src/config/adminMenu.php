@@ -4,6 +4,9 @@
  * Copyright (c) 2026 Besnovatyj. Licensed under the MIT License.
  */
 
+use Besnovatyj\Contracts\adminMenu\AdminMenuLocation;
+use Besnovatyj\Contracts\adminMenu\AdminMenuPlacement;
+
 return [[
     'label' => 'Блоки темы',
     'iconClass' => 'bi bi-grid-1x2 me-1',
@@ -13,13 +16,13 @@ return [[
     },
     '_meta' => [
         'placements' => [
-            [
-                'location' => 'right-sidebar',
-                'group' => 'Content',
-                'groupIcon' => 'bi bi-pencil-square',
-                'priority' => 100,
-                'groupPriority' => 90,
-            ],
+            new AdminMenuPlacement(
+                location: AdminMenuLocation::RightSidebar,
+                group: 'Content',
+                groupIcon: 'bi bi-pencil-square',
+                groupPriority: 90,
+                priority: 100,
+            ),
         ],
     ],
 ]];
