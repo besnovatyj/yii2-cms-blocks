@@ -24,7 +24,9 @@ Statamic Replicator, Strapi Dynamic Zones.
 - [ ] Шаг 7 — типы от контентных модулей (Performance, Blog, Gallery), по одному пакету за шаг
   - [~] Performance — `Performance:showcase` (витрина по коду, раскладка, лимит, ссылка «вся афиша»);
     шаблон темы — overlay `themes/berdrama/modules/Performance/views/blockTypes/showcase.php` —
-    код написан, не проверен в работе
+    код написан, не проверен в работе. В v1.8.1 список витрин переведён на ленивый select
+    (Blocks v2.1.0): кэш списка в APCu и его сброс из `ShowcaseManageService`, добавленные в
+    v1.8.0, убраны; `conflict` с Blocks `<2.1`
   - [~] Blog — `Blog:latest` (рубрика или весь блог, с подрубриками, сколько и в сколько колонок,
     ссылка «все новости»; посты — `LatestPostsData` → `PostReadRepository::latest()` по дате
     публикации); шаблон темы — overlay `modules/Blog/views/blockTypes/latest.php` на плитке ленты
