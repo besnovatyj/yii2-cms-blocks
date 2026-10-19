@@ -158,6 +158,15 @@ $label = Html::label(Html::encode($field->label) . ($field->required ? ' <span c
                     ]) ?>
                 </div>
             </div>
+            <div class="form-check mt-1">
+                <?= Html::checkbox($name . '[blank]', (bool)($value['blank'] ?? false), [
+                    'id' => $id . '-blank',
+                    'class' => 'form-check-input',
+                    'value' => '1',
+                    'uncheck' => '0',
+                ]) ?>
+                <?= Html::label('Открывать в новой вкладке — для ссылок на другие сайты', $id . '-blank', ['class' => 'form-check-label']) ?>
+            </div>
             <?php if ($linkTargets !== []): ?>
                 <div class="form-text">Раздел сайта главнее своего адреса: ссылка на раздел не ломается при смене его адреса.</div>
             <?php endif; ?>

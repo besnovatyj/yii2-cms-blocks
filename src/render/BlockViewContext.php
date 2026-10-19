@@ -11,6 +11,7 @@ namespace Besnovatyj\Blocks\render;
 use Besnovatyj\Blocks\files\BlockFiles;
 use Besnovatyj\Contracts\shortcode\ShortcodeTextResolver;
 use Yii;
+use yii\helpers\Html;
 use yii\helpers\Url;
 
 /**
@@ -22,7 +23,7 @@ use yii\helpers\Url;
  *
  * ```php
  * <img src="<?= Html::encode($block->imageUrl($data['image'])) ?>" alt="<?= Html::encode($data['image']['alt']) ?>">
- * <a href="<?= Html::encode($block->linkUrl($data['link'])) ?>">…</a>
+ * <a href="<?= Html::encode($block->linkUrl($data['link'])) ?>"<?= $block->linkAttributes($data['link']) ?>>…</a>
  * <?= $block->html($data['text']) ?>
  * ```
  */
@@ -59,6 +60,37 @@ final readonly class BlockViewContext
         }
 
         return (string)($link['url'] ?? '');
+    }
+
+    /**
+     * Атрибуты тега `<a>` для поля `link`, кроме `href`: строка с ведущим пробелом или пустая.
+     *
+     * Ссылка с флажком «в новой вкладке» получает `target="_blank" rel="nofollow noopener"`:
+     * посетитель не уходит с сайта, чужая страница не получает доступ к нашей вкладке
+     * (`noopener`), а ссылка не передаёт вес стороннему сайту (`nofollow`). Без флажка — пусто.
+     *
+     * ```php
+     * <a href="<?= Html::encode($block->linkUrl($data['link'])) ?>"<?= $block->linkAttributes($data['link']) ?>>…</a>
+     * ```
+     *
+     * Для `Html::a()` и других хелперов — {@see linkOptions()}.
+     *
+     * @param array{blank?:bool} $link
+     */
+    public function linkAttributes(array $link): string
+    {
+        return Html::renderTagAttributes($this->linkOptions($link));
+    }
+
+    /**
+     * То же, что {@see linkAttributes()}, массивом опций для `Html::a()` и прочих хелперов Yii.
+     *
+     * @param array{blank?:bool} $link
+     * @return array<string, string>
+     */
+    public function linkOptions(array $link): array
+    {
+        return !empty($link['blank']) ? ['target' => '_blank', 'rel' => 'nofollow noopener'] : [];
     }
 
     /**

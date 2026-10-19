@@ -73,7 +73,7 @@ return [
 | `text`, `textarea` | строка | |
 | `richtext` | HTML | Jodit со сниппетами; выводить через `$block->html()` (текстовые шорткоды) |
 | `image` | `['file' => …, 'alt' => …]` | файл — относительно папки блока; выводить через `$block->imageUrl()` |
-| `link` | `['url' => …, 'route' => …, 'params' => […]]` | раздел из `MenuTargetProvider` или свой URL; выводить через `$block->linkUrl()` |
+| `link` | `['url' => …, 'route' => …, 'params' => […], 'blank' => bool]` | раздел из `MenuTargetProvider` или свой URL; выводить через `$block->linkUrl()` и `$block->linkAttributes()` (флажок «в новой вкладке» → `target="_blank" rel="nofollow noopener"`) |
 | `select` | ключ из `options` | `options` — массив или `Closure` (ленивый список из БД модуля, см. ниже) |
 | `checkbox` | bool | |
 | `repeater` | список строк | без вложенных repeater; `richtext` и `code` внутри строки недоступны |
@@ -102,7 +102,7 @@ use yii\helpers\Html;
 <section class="cards-3">
     <?php if ($data['heading'] !== ''): ?><h2><?= Html::encode($data['heading']) ?></h2><?php endif; ?>
     <?php foreach ($data['cards'] as $card): ?>
-        <a href="<?= Html::encode($block->linkUrl($card['link'])) ?>">
+        <a href="<?= Html::encode($block->linkUrl($card['link'])) ?>"<?= $block->linkAttributes($card['link']) ?>>
             <img src="<?= Html::encode($block->imageUrl($card['image'])) ?>" alt="<?= Html::encode($card['image']['alt']) ?>">
             <?= Html::encode($card['caption']) ?>
         </a>

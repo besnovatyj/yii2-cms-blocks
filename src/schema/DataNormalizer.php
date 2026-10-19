@@ -23,7 +23,8 @@ use Besnovatyj\Blocks\files\BlockFiles;
  *   (`options` — замыкание) строка как есть, её проверяет {@see DataValidator};
  * - checkbox — bool;
  * - image — `['file' => string, 'alt' => string]`, `file` относительно папки блока ({@see BlockFiles});
- * - link — `['url' => string, 'route' => string, 'params' => array<string,string>]`;
+ * - link — `['url' => string, 'route' => string, 'params' => array<string,string>, 'blank' => bool]`,
+ *   `blank` — открывать в новой вкладке;
  * - repeater — список строк, каждая приведена к полям строки. Порядок строк — порядок во входных
  *   данных (в форме — порядок в DOM), ключи отбрасываются.
  *
@@ -120,7 +121,7 @@ final class DataNormalizer
     }
 
     /**
-     * @return array{url:string, route:string, params:array<string,string>}
+     * @return array{url:string, route:string, params:array<string,string>, blank:bool}
      */
     private function link(mixed $raw): array
     {
@@ -128,6 +129,8 @@ final class DataNormalizer
         $url = is_scalar($raw['url'] ?? null) ? trim((string)$raw['url']) : '';
         $route = is_scalar($raw['route'] ?? null) ? (string)$raw['route'] : '';
         $params = is_array($raw['params'] ?? null) ? array_map('strval', array_filter($raw['params'], 'is_scalar')) : [];
+        // Ссылки, сохранённые до появления флажка, его не несут — открываются как раньше, на месте.
+        $blank = isset($raw['blank']) && filter_var($raw['blank'], FILTER_VALIDATE_BOOLEAN);
 
         if (array_key_exists('target', $raw)) {
             [$route, $params] = $this->decodeTarget(is_scalar($raw['target']) ? (string)$raw['target'] : '');
@@ -135,8 +138,8 @@ final class DataNormalizer
 
         // Выбрана цель — она главнее: URL по маршруту переживает смену адреса раздела.
         return $route !== ''
-            ? ['url' => '', 'route' => $route, 'params' => $params]
-            : ['url' => $url, 'route' => '', 'params' => []];
+            ? ['url' => '', 'route' => $route, 'params' => $params, 'blank' => $blank]
+            : ['url' => $url, 'route' => '', 'params' => [], 'blank' => $blank];
     }
 
     /**
