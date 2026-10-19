@@ -37,10 +37,12 @@
   },
   "require": {
     "besnovatyj/yii2-cms-backend-widgets": "^1.0",
-    "besnovatyj/yii2-cms-contracts": "^3.0",
+    "besnovatyj/yii2-cms-contracts": "^3.2",
     "besnovatyj/yii2-cms-datetime-widgets": "^1.0",
     "besnovatyj/yii2-cms-editor": "^1.0",
+    "besnovatyj/yii2-cms-file-manager": "^1.1",
     "besnovatyj/yii2-cms-forms": "^1.0",
+    "besnovatyj/yii2-cms-helpers": "^1.0",
     "besnovatyj/yii2-cms-kernel": "^1.2",
     "php": ">=8.4",
     "yiisoft/yii2": "~2.0.0",

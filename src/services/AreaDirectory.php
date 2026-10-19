@@ -97,6 +97,14 @@ final class AreaDirectory
     }
 
     /**
+     * Объявленное темой место; null — каталога нет или тема место не объявляет.
+     */
+    public function area(string $id): ?ThemeArea
+    {
+        return $this->declared()[$id] ?? null;
+    }
+
+    /**
      * Есть ли у модуля каталог мест (установлен пакет тем).
      */
     public function hasCatalog(): bool

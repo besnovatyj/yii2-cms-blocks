@@ -18,6 +18,7 @@ use yii\data\ActiveDataProvider;
 class BlockSearch extends BaseForm
 {
     public ?string $area = null;
+    public ?string $type = null;
     public ?string $title = null;
     public ?int $status = null;
 
@@ -25,7 +26,7 @@ class BlockSearch extends BaseForm
     {
         return [
             ['status', 'integer'],
-            [['area', 'title'], 'safe'],
+            [['area', 'type', 'title'], 'safe'],
         ];
     }
 
@@ -49,6 +50,7 @@ class BlockSearch extends BaseForm
 
         $query->andFilterWhere([
             'area' => $this->area,
+            'type' => $this->type,
             'status' => $this->status,
         ]);
 

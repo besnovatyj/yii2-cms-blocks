@@ -9,6 +9,6 @@ return [
     'params' => [
         'iconClass' => 'bi bi-grid-1x2',
 
-        'directories' => false, // Для работы модуля отдельные директории статики не нужны.
+        'directories' => true, // Папки файлов блоков: @static/origin/Blocks/{id}.
     ],
 ];

@@ -10,7 +10,8 @@ namespace Besnovatyj\Blocks\widgets;
 
 use Besnovatyj\Blocks\Module;
 use Besnovatyj\Blocks\readModels\AreaReadModel;
-use Besnovatyj\Contracts\shortcode\ShortcodeTextResolver;
+use Besnovatyj\Blocks\render\BlockRenderer;
+use Besnovatyj\Blocks\types\BuiltInTypes;
 use Yii;
 use yii\base\Widget;
 
@@ -26,8 +27,8 @@ use yii\base\Widget;
  * <?php endif; ?>
  * ```
  *
- * Несколько видимых блоков выводятся подряд в порядке сортировки. Текстовые шорткоды (`%name%`)
- * разворачиваются, если подключён модуль шорткодов (контракт {@see ShortcodeTextResolver}); виджетные
+ * Несколько видимых блоков выводятся подряд в порядке сортировки, каждый — шаблоном своего типа
+ * ({@see BlockRenderer}). Текстовые шорткоды (`%name%`) в HTML разворачивает шаблон типа; виджетные
  * (`[widget …]`) — нет: место выводит контент, а не собирает страницу.
  *
  * Модуль блоков не установлен — виджет молча отдаёт пустоту, а не роняет страницу на запросе к
@@ -43,12 +44,16 @@ class BlockArea extends Widget
      *
      * Редактор оборачивает любой текст в абзац, а `<p>` внутри строки ломает её переносом. При
      * `true` обёртка снимается, если блок — ровно один абзац без атрибутов; всё сложнее остаётся
-     * как есть, потому что тогда разметку явно задумал автор.
+     * как есть, потому что тогда разметку явно задумал автор. Действует только на блоки типа `html`:
+     * у остальных разметку рисует шаблон типа.
      */
     public bool $inline = false;
 
-    public function __construct(private readonly AreaReadModel $reader, $config = [])
-    {
+    public function __construct(
+        private readonly AreaReadModel $reader,
+        private readonly BlockRenderer $renderer,
+        $config = [],
+    ) {
         parent::__construct($config);
     }
 
@@ -59,29 +64,15 @@ class BlockArea extends Widget
         }
 
         $parts = [];
-        foreach ($this->reader->contents($this->area) as $content) {
-            $content = trim($this->resolveShortcodes($content));
-            if ($content === '') {
+        foreach ($this->reader->blocks($this->area) as $row) {
+            $html = trim($this->renderer->render($row['id'], $row['type'], $this->area, $row['data']));
+            if ($html === '') {
                 continue;
             }
-            $parts[] = $this->inline ? $this->unwrapParagraph($content) : $content;
+            $parts[] = $this->inline && $row['type'] === BuiltInTypes::HTML ? $this->unwrapParagraph($html) : $html;
         }
 
         return implode("\n", $parts);
-    }
-
-    /**
-     * Текстовые шорткоды, если модуль шорткодов подключён; иначе строка как есть.
-     */
-    private function resolveShortcodes(string $content): string
-    {
-        if (!Yii::$app->has('shortcode')) {
-            return $content;
-        }
-
-        $resolver = Yii::$app->get('shortcode');
-
-        return $resolver instanceof ShortcodeTextResolver ? $resolver->resolveText($content) : $content;
     }
 
     /**

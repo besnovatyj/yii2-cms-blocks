@@ -10,9 +10,16 @@ namespace Besnovatyj\Blocks\forms\backend;
 
 use Besnovatyj\Blocks\entities\Block;
 use Besnovatyj\Forms\BaseForm;
+use Closure;
 
 /**
- * Форма создания/редактирования блока.
+ * Форма общих полей блока: место, тип, название, статус, окно показа, порядок.
+ *
+ * Данные блока по схеме типа — отдельная форма {@see BlockDataForm}: её поля зависят от типа и
+ * появляются после первого сохранения, когда у блока есть папка файлов.
+ *
+ * Тип задаётся только при создании. Место и тип проверяются вместе: тип должен быть разрешён
+ * местом ({@see self::$typesForArea}), и при переносе блока в другое место тоже.
  *
  * Наследует {@see BaseForm}: скаляры из POST приводятся к typed-свойствам (нет TypeError).
  * Даты показа в форме — с точностью до минуты (`Y-m-d H:i`, формат виджета даты), в БД —
@@ -24,24 +31,29 @@ class BlockForm extends BaseForm
     public const string DATE_FORMAT = 'Y-m-d H:i';
 
     public string $area = '';
+    public string $type = '';
     public string $title = '';
-    public string $content = '';
     public int $status = Block::STATUS_DRAFT;
     public ?string $show_from = null;
     public ?string $show_to = null;
     public int $sort_order = 0;
 
     /**
-     * @param Block|null         $block     редактируемый блок (null — новый)
-     * @param list<string>|null  $areaRange допустимые места; null — любое корректное имя
-     *                                      (пакета тем нет, места свободные)
+     * @param Block|null        $block        редактируемый блок (null — новый)
+     * @param list<string>|null $areaRange    допустимые места; null — любое корректное имя
+     *                                        (пакета тем нет, места свободные)
+     * @param Closure(string): list<string> $typesForArea id типов, которые принимает место
      */
-    public function __construct(?Block $block = null, private readonly ?array $areaRange = null, array $config = [])
-    {
+    public function __construct(
+        ?Block $block,
+        private readonly ?array $areaRange,
+        private readonly Closure $typesForArea,
+        array $config = [],
+    ) {
         if ($block) {
             $this->area = $block->area;
+            $this->type = $block->type;
             $this->title = $block->title;
-            $this->content = $block->content;
             $this->status = (int)$block->status;
             $this->show_from = $block->show_from !== null ? substr($block->show_from, 0, 16) : null;
             $this->show_to = $block->show_to !== null ? substr($block->show_to, 0, 16) : null;
@@ -50,17 +62,24 @@ class BlockForm extends BaseForm
         parent::__construct($config);
     }
 
+    /** Сценарий создания: только в нём тип принимается из POST. */
+    public const string SCENARIO_CREATE = 'create';
+
     public function rules(): array
     {
         return [
-            [['area', 'title', 'content'], 'required'],
+            [['area', 'title'], 'required'],
             ['area', 'string', 'max' => 64],
             ['area', 'match', 'pattern' => '/^[a-z0-9][a-z0-9_-]*$/i',
                 'message' => 'Латиница, цифры, дефис и подчёркивание.'],
             ['area', 'in', 'range' => $this->areaRange ?? [], 'when' => fn () => $this->areaRange !== null,
                 'message' => 'Активная тема не объявляет такое место.'],
+            // Тип — атрибут только сценария создания: при правке он из POST не принимается.
+            ['type', 'required', 'on' => self::SCENARIO_CREATE],
+            ['type', 'string', 'max' => 64, 'on' => self::SCENARIO_CREATE],
+            ['type', 'validateType', 'on' => self::SCENARIO_CREATE],
+            ['area', 'validateType', 'except' => self::SCENARIO_CREATE],
             ['title', 'string', 'max' => 255],
-            ['content', 'string'],
             ['status', 'in', 'range' => array_keys(Block::statusList())],
             ['sort_order', 'integer'],
             [['show_from', 'show_to'], 'default', 'value' => null],
@@ -71,12 +90,24 @@ class BlockForm extends BaseForm
         ];
     }
 
+    /**
+     * Тип разрешён выбранным местом. При создании ошибка ложится на тип, при правке — на место.
+     */
+    public function validateType(string $attribute): void
+    {
+        if (!in_array($this->type, ($this->typesForArea)($this->area), true)) {
+            $this->addError($attribute, $attribute === 'type'
+                ? 'Этот тип блока недоступен в выбранном месте.'
+                : 'Выбранное место не принимает блоки этого типа.');
+        }
+    }
+
     public function attributeLabels(): array
     {
         return [
             'area' => 'Место',
+            'type' => 'Тип',
             'title' => 'Название',
-            'content' => 'Содержимое',
             'status' => 'Статус',
             'show_from' => 'Показывать с',
             'show_to' => 'Показывать до',
@@ -87,9 +118,8 @@ class BlockForm extends BaseForm
     public function attributeHints(): array
     {
         return [
+            'type' => 'Тип задаётся один раз: после создания его не сменить.',
             'title' => 'Видно только в админке.',
-            'content' => 'Каркас места (обёртка, кнопка закрытия) рисует тема. Сюда — только начинка: '
-                . 'удобнее всего начать со сниппета темы из пикера редактора.',
             'show_from' => 'Пусто — с момента включения.',
             'show_to' => 'Пусто — без срока.',
             'sort_order' => 'Если в месте несколько блоков, они выводятся подряд: меньше — выше.',

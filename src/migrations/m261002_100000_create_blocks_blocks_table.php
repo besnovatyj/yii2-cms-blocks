@@ -27,10 +27,12 @@ class m261002_100000_create_blocks_blocks_table extends BaseMigration
                 'id' => $this->primaryKey(),
                 'area' => $this->string(64)->notNull()
                     ->comment('Идентификатор места темы'),
+                'type' => $this->string(64)->notNull()
+                    ->comment('Тип блока'),
                 'title' => $this->string(255)->notNull()
                     ->comment('Название блока для админки'),
-                'content' => $this->text()->notNull()
-                    ->comment('Начинка места (HTML)'),
+                'data' => $this->json()->notNull()
+                    ->comment('Данные блока по схеме типа'),
                 'status' => $this->smallInteger(1)->notNull()->defaultValue(0)
                     ->comment('Статус: 0 — выключен, 1 — включён'),
                 'show_from' => $this->dateTime()->null()

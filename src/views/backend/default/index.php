@@ -21,6 +21,7 @@ use yii\web\View;
 /* @var $areaRows list<array{area:ThemeArea, declared:bool, total:int, active:int}> */
 /* @var $areaOptions array<string,string> */
 /* @var $hasCatalog bool */
+/* @var $typeLabels array<string,string> id типа => название */
 
 $this->title = 'Блоки темы';
 $this->params['breadcrumbs'][] = $this->title;
@@ -114,6 +115,18 @@ $this->params['breadcrumbs'][] = $this->title;
                             return Html::a(Html::encode($model->title), ['update', 'id' => $model->id]);
                         },
                         'format' => 'raw',
+                    ],
+                    [
+                        'attribute' => 'type',
+                        'value' => static function (Block $model) use ($typeLabels) {
+                            if (!isset($typeLabels[$model->type])) {
+                                return '<span class="badge text-bg-warning">Тип недоступен</span> <code>'
+                                    . Html::encode($model->type) . '</code>';
+                            }
+                            return Html::encode($typeLabels[$model->type]);
+                        },
+                        'format' => 'raw',
+                        'filter' => $typeLabels,
                     ],
                     [
                         'label' => 'Показ',

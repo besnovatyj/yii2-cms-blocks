@@ -10,6 +10,7 @@ use Besnovatyj\Blocks\Module;
 use Besnovatyj\Blocks\readModels\AreaReadModel;
 use Besnovatyj\Blocks\repositories\BlockRepository;
 use Besnovatyj\Blocks\services\AreaDirectory;
+use Besnovatyj\Blocks\types\BlockTypeRegistry;
 use Besnovatyj\Contracts\theme\ThemeAreaCatalog;
 
 /**
@@ -25,7 +26,10 @@ use Besnovatyj\Contracts\theme\ThemeAreaCatalog;
  * блоков реально его спрашивает.
  *
  * {@see AreaReadModel} — синглтон, чтобы все места страницы делили одну выборку на запрос: виджет
- * места создаётся заново на каждый вызов, и без синглтона каждый тянул бы кэш заново.
+ * места создаётся заново на каждый вызов, и без синглтона каждый тянул бы кэш заново. По той же
+ * причине синглтон и {@see BlockTypeRegistry}: memo найденных типов общий на все места страницы.
+ * Каталог типов темы реестр получает автосвязыванием: параметр nullable, и без биндинга (пакета тем
+ * нет) контейнер передаёт null.
  */
 return [
     'modules' => [
@@ -37,6 +41,7 @@ return [
     'container' => [
         'singletons' => [
             AreaReadModel::class => AreaReadModel::class,
+            BlockTypeRegistry::class => BlockTypeRegistry::class,
             AreaDirectory::class => static fn (): AreaDirectory => new AreaDirectory(
                 Yii::$container->has(ThemeAreaCatalog::class) ? Yii::$container->get(ThemeAreaCatalog::class) : null,
                 Yii::$container->get(BlockRepository::class),

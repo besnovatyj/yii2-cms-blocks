@@ -25,23 +25,25 @@ use yii\caching\TagDependency;
  * загруженным строкам. Иначе блок, у которого наступила дата, ждал бы сброса кэша.
  *
  * Строки хранятся массивами, а не AR-объектами: так они кладутся в кэш без сериализации моделей.
+ * В кэше — данные блоков, а не готовый HTML: у типов модулей данные живые, их кэширует поставщик.
  */
 final class AreaReadModel
 {
-    public const string CACHE_KEY = 'blocks.active';
+    /** Ключ меняется вместе с форматом строк: новый код не должен читать кэш старого формата. */
+    public const string CACHE_KEY = 'blocks.active.v2';
     public const string CACHE_TAG = 'blocks';
 
-    /** @var array<string, list<array{content:string, show_from:?string, show_to:?string}>>|null */
+    /** @var array<string, list<array{id:int, type:string, data:array, show_from:?string, show_to:?string}>>|null */
     private ?array $byArea = null;
 
     /**
-     * Начинка блоков, видимых в месте сейчас, в порядке вывода.
+     * Блоки, видимые в месте сейчас, в порядке вывода.
      *
      * @param string                 $area идентификатор места
      * @param DateTimeImmutable|null $now  момент проверки окна показа (null — сейчас)
-     * @return list<string>
+     * @return list<array{id:int, type:string, data:array<string, mixed>}>
      */
-    public function contents(string $area, ?DateTimeImmutable $now = null): array
+    public function blocks(string $area, ?DateTimeImmutable $now = null): array
     {
         $moment = ($now ?? new DateTimeImmutable())->format('Y-m-d H:i:s');
 
@@ -53,7 +55,7 @@ final class AreaReadModel
             if ($row['show_to'] !== null && $row['show_to'] < $moment) {
                 continue;
             }
-            $result[] = $row['content'];
+            $result[] = ['id' => $row['id'], 'type' => $row['type'], 'data' => $row['data']];
         }
 
         return $result;
@@ -72,7 +74,7 @@ final class AreaReadModel
     /**
      * Включённые блоки, сгруппированные по местам (memo на запрос поверх кэша).
      *
-     * @return array<string, list<array{content:string, show_from:?string, show_to:?string}>>
+     * @return array<string, list<array{id:int, type:string, data:array, show_from:?string, show_to:?string}>>
      */
     private function byArea(): array
     {
@@ -94,7 +96,9 @@ final class AreaReadModel
         $byArea = [];
         foreach ($rows as $row) {
             $byArea[(string)$row['area']][] = [
-                'content' => (string)$row['content'],
+                'id' => (int)$row['id'],
+                'type' => (string)$row['type'],
+                'data' => $row['data'],
                 'show_from' => $row['show_from'] !== null ? (string)$row['show_from'] : null,
                 'show_to' => $row['show_to'] !== null ? (string)$row['show_to'] : null,
             ];
@@ -106,15 +110,25 @@ final class AreaReadModel
     /**
      * Включённые блоки в порядке вывода; окно показа не учитывается (см. шапку класса).
      *
-     * @return list<array{area:string, content:string, show_from:?string, show_to:?string}>
+     * `asArray()` не приводит типы колонок, поэтому JSON декодируется здесь — один раз до кэша.
+     *
+     * @return list<array{id:int, area:string, type:string, data:array, show_from:?string, show_to:?string}>
      */
     private function loadRows(): array
     {
-        return Block::find()
-            ->select(['area', 'content', 'show_from', 'show_to'])
+        $rows = Block::find()
+            ->select(['id', 'area', 'type', 'data', 'show_from', 'show_to'])
             ->where(['status' => Block::STATUS_ACTIVE])
             ->orderBy(['area' => SORT_ASC, 'sort_order' => SORT_ASC, 'id' => SORT_ASC])
             ->asArray()
             ->all();
+
+        foreach ($rows as &$row) {
+            $data = is_string($row['data']) ? json_decode($row['data'], true) : $row['data'];
+            $row['data'] = is_array($data) ? $data : [];
+        }
+        unset($row);
+
+        return $rows;
     }
 }
