@@ -121,6 +121,17 @@ final class DataValidator
                 return null;
 
             case FieldKind::Select:
+                // Статический список нормализатор уже привёл к допустимому значению. Ленивый —
+                // нормализатор не загружает (он работает и при выводе), проверка здесь.
+                if (!$field->hasLazyOptions()) {
+                    return null;
+                }
+                $value = (string)$value;
+                if ($value === '') {
+                    return $field->required ? 'Выберите значение.' : null;
+                }
+                return array_key_exists($value, $field->options()) ? null : 'Выберите значение из списка.';
+
             case FieldKind::Checkbox:
                 // Значение уже приведено нормализатором к допустимому.
                 return null;

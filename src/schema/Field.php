@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace Besnovatyj\Blocks\schema;
 
+use Closure;
 use InvalidArgumentException;
 
 /**
@@ -22,11 +23,16 @@ use InvalidArgumentException;
  *     'required'  => false,
  *     'default'   => '',              // значение нового блока (для text/textarea/richtext/select/checkbox)
  *     'maxLength' => 255,             // text, textarea
- *     'options'   => ['left' => 'Слева', 'right' => 'Справа'], // select, обязательно
+ *     'options'   => ['left' => 'Слева', 'right' => 'Справа'], // select, обязательно (массив или Closure)
  *     'min' => 0, 'max' => 3,         // repeater: границы числа строк
  *     'fields'    => [...],           // repeater: поля строки
  * ]
  * ```
+ *
+ * Варианты select из БД модуля (витрины, рубрики) передаются замыканием: `'options' => fn () => […]`.
+ * Тогда список загружается только формой и проверкой при сохранении, а при выводе блока значение
+ * берётся как сохранено — без запроса на каждый показ страницы. Пропавший с тех пор вариант
+ * (удалённая рубрика) — забота шаблона или поставщика данных: они просто ничего не найдут.
  *
  * Ограничения repeater: строки не вкладываются друг в друга, а `richtext` и `code` внутри строки
  * недоступны. Строки добавляются в форму HTMX-запросом, а инициализировать редактор во вставленном
@@ -41,8 +47,9 @@ final readonly class Field
     private const array NOT_IN_REPEATER = [FieldKind::Repeater, FieldKind::Richtext, FieldKind::Code];
 
     /**
-     * @param array<string, string> $options
-     * @param list<Field>           $fields
+     * @param array<string, string>                 $options       варианты select (статические)
+     * @param list<Field>                           $fields
+     * @param (Closure(): array<string, string>)|null $optionsLoader варианты select, загружаемые лениво
      */
     public function __construct(
         public string $name,
@@ -56,7 +63,27 @@ final readonly class Field
         public int $min = 0,
         public ?int $max = null,
         public array $fields = [],
+        public ?Closure $optionsLoader = null,
     ) {
+    }
+
+    /**
+     * Варианты select: статические или загруженные. Загрузчик вызывается на каждый вызов —
+     * его зовут только форма и проверка при сохранении, по разу на поле.
+     *
+     * @return array<string, string>
+     */
+    public function options(): array
+    {
+        return $this->optionsLoader !== null ? array_map('strval', ($this->optionsLoader)()) : $this->options;
+    }
+
+    /**
+     * Варианты select загружаются лениво (список из БД модуля).
+     */
+    public function hasLazyOptions(): bool
+    {
+        return $this->optionsLoader !== null;
     }
 
     /**
@@ -80,8 +107,9 @@ final readonly class Field
             throw new InvalidArgumentException("Block field '{$name}': kind '{$kind->value}' is not allowed inside a repeater");
         }
 
-        $options = array_map('strval', (array)($definition['options'] ?? []));
-        if ($kind === FieldKind::Select && $options === []) {
+        $loader = ($definition['options'] ?? null) instanceof Closure ? $definition['options'] : null;
+        $options = $loader === null ? array_map('strval', (array)($definition['options'] ?? [])) : [];
+        if ($kind === FieldKind::Select && $options === [] && $loader === null) {
             throw new InvalidArgumentException("Block field '{$name}': select requires options");
         }
 
@@ -107,6 +135,7 @@ final readonly class Field
             min: (int)($definition['min'] ?? 0),
             max: isset($definition['max']) ? (int)$definition['max'] : null,
             fields: $fields,
+            optionsLoader: $loader,
         );
     }
 

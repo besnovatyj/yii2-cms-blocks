@@ -81,7 +81,14 @@ $label = Html::label(Html::encode($field->label) . ($field->required ? ' <span c
 
         <?php case FieldKind::Select: ?>
             <?= $label ?>
-            <?= Html::dropDownList($name, (string)$value, $field->options, ['id' => $id, 'class' => 'form-select' . ($error !== null ? ' is-invalid' : '')]) ?>
+            <?= Html::dropDownList($name, (string)$value, $field->options(), array_filter([
+                'id' => $id,
+                'class' => 'form-select' . ($error !== null ? ' is-invalid' : ''),
+                // Ленивый список — из БД модуля: сохранённого варианта в нём может уже не быть,
+                // и без пустого пункта браузер молча показал бы первый. Необязательному полю
+                // пустой вариант со своей подписью («Все рубрики») даёт сам загрузчик.
+                'prompt' => $field->hasLazyOptions() && $field->required ? '— выберите —' : null,
+            ], static fn ($v) => $v !== null)) ?>
             <?php break; ?>
 
         <?php case FieldKind::Checkbox: ?>

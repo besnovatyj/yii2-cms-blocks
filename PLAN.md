@@ -22,6 +22,16 @@ Statamic Replicator, Strapi Dynamic Zones.
   (вместо `cards-3`: фотографии или логотипы, 2–6 в ряд) и `image-overlay`, демо-страница
   `docs/src/examples/blocks-home-demo.html` — код написан, не проверен в работе
 - [ ] Шаг 7 — типы от контентных модулей (Performance, Blog, Gallery), по одному пакету за шаг
+  - [~] Performance — `Performance:showcase` (витрина по коду, раскладка, лимит, ссылка «вся афиша»);
+    шаблон темы — overlay `themes/berdrama/modules/Performance/views/blockTypes/showcase.php` —
+    код написан, не проверен в работе
+  - [~] Blog — `Blog:latest` (рубрика или весь блог, с подрубриками, сколько и в сколько колонок,
+    ссылка «все новости»; посты — `LatestPostsData` → `PostReadRepository::latest()` по дате
+    публикации); шаблон темы — overlay `modules/Blog/views/blockTypes/latest.php` на плитке ленты
+    `_post.php` — код написан, не проверен в работе. Для него в модуль блоков добавлен ленивый
+    список select (`'options' => Closure`, v2.1.0): список рубрик грузят только форма и проверка
+    при сохранении, вывод блока — без запроса. Blog объявляет `conflict` с Blocks `<2.1`
+  - [ ] Gallery — галерея
 
 ## Решения (зафиксированы)
 

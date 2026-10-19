@@ -19,7 +19,8 @@ use Besnovatyj\Blocks\files\BlockFiles;
  *
  * Значения по видам ({@see FieldKind}):
  * - text, textarea, richtext, code — строка;
- * - select — ключ из `options` (чужое значение заменяется значением по умолчанию);
+ * - select — ключ из `options` (чужое значение заменяется значением по умолчанию); у ленивого списка
+ *   (`options` — замыкание) строка как есть, её проверяет {@see DataValidator};
  * - checkbox — bool;
  * - image — `['file' => string, 'alt' => string]`, `file` относительно папки блока ({@see BlockFiles});
  * - link — `['url' => string, 'route' => string, 'params' => array<string,string>]`;
@@ -88,6 +89,13 @@ final class DataNormalizer
     private function select(Field $field, mixed $raw): string
     {
         $value = is_scalar($raw) ? (string)$raw : '';
+
+        // Ленивый список здесь не загружается: нормализатор работает и при выводе блока.
+        // Значение проверяет DataValidator при сохранении.
+        if ($field->hasLazyOptions()) {
+            return $raw === null ? (string)($field->default ?? '') : $value;
+        }
+
         if (array_key_exists($value, $field->options)) {
             return $value;
         }
