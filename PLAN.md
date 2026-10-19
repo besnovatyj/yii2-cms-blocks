@@ -33,7 +33,11 @@ Statamic Replicator, Strapi Dynamic Zones.
     `_post.php` — код написан, не проверен в работе. Для него в модуль блоков добавлен ленивый
     список select (`'options' => Closure`, v2.1.0): список рубрик грузят только форма и проверка
     при сохранении, вывод блока — без запроса. Blog объявляет `conflict` с Blocks `<2.1`
-  - [ ] Gallery — галерея
+  - [~] Gallery — `Gallery:photos` (галерея — ленивый список, сетка или лента, сколько снимков,
+    ссылка на страницу галереи); снимки — `GalleryPhotosData` через `GalleryReadRepository::find()`
+    (только опубликованная галерея в видимом разделе); шаблон темы — overlay
+    `modules/Gallery/views/blockTypes/photos.php` на `.photo-grid` и ленте виджета галереи;
+    `conflict` с Blocks `<2.1` — код написан, не проверен в работе
 
 ## Решения (зафиксированы)
 
